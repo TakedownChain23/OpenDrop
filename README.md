@@ -6,7 +6,7 @@ Included are game implementations for the OpenDrop board V4.0. The games are pde
 
 ### Games
 
-- Pong
+Pong: OpenDropController4_25_Pong
 
 <br/>
 <br/>
