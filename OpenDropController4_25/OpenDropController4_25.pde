@@ -119,7 +119,169 @@ int last_h=0;
 
 Electrode[] electrodeArray;
 
+// Game Implementation - start
 
+int intervalStartTime;
+boolean moveX = true;
+
+int viewSizeX = 14;
+int viewSizeY = 8;
+
+int leftPaddlePosition = 1;
+int rightPaddlePosition = 1;
+int paddleLength = 2;
+
+int ballPositionX = viewSizeX / 2;
+int ballPositionY = viewSizeY / 2;
+int ballVelocityX = -1;
+int ballVelocityY = -1;
+
+int ballUpdateInterval = 400;
+
+boolean gameOver = true;
+
+boolean runGameOnStart = false;
+
+void gameSetup() {
+  if (runGameOnStart) {
+    restart();
+  }
+}
+
+void gameUpdate() {
+  int currentTime = millis();
+  
+  if (currentTime - intervalStartTime >= ballUpdateInterval) {
+    if (!gameOver) {
+      setTile(ballPositionX, ballPositionY, false);
+      if (moveX) {
+        if (ballPositionX == 2 && ballPositionY >= leftPaddlePosition && ballPositionY < leftPaddlePosition + paddleLength) {
+          ballVelocityX *= -1;
+        }
+        else if (ballPositionX == viewSizeX - 3 && ballPositionY >= rightPaddlePosition && ballPositionY < rightPaddlePosition + paddleLength) {
+          ballVelocityX *= -1;
+        }
+        else if (ballPositionX == 0 || ballPositionX == viewSizeX - 1) {
+          gameOver = true;
+        }
+        
+        ballPositionX += ballVelocityX;
+      }
+      else {
+        if (ballPositionY == 0 || ballPositionY == viewSizeY - 1) {
+          ballVelocityY *= -1;
+        }
+        
+        ballPositionY += ballVelocityY;
+      }
+      
+      moveX = !moveX;
+      
+      setTile(ballPositionX, ballPositionY, true);
+      drawPaddles();
+      
+      changed = true;
+    }
+    
+    intervalStartTime = currentTime;
+  }
+}
+
+void restart() {
+  frame_no = 1;
+  play = false;
+  
+  moveX = true;
+  
+  leftPaddlePosition = viewSizeY / 2 - paddleLength / 2;
+  rightPaddlePosition = leftPaddlePosition;
+  
+  ballPositionX = viewSizeX / 2;
+  ballPositionY = int(random(1, viewSizeY - 1));
+  
+  ballVelocityX = (int)random(2) * 2 - 1;
+  ballVelocityY = (int)random(2) * 2 - 1;
+  
+  clear();
+  drawPaddles();
+  setTile(ballPositionX, ballPositionY, true);
+  gameOver = false;
+}
+
+void drawPaddles() {
+  drawPaddle(1, leftPaddlePosition, paddleLength);
+  drawPaddle(viewSizeX - 2, rightPaddlePosition, paddleLength);
+}
+
+void drawPaddle(int x, int y, int size) {
+  for (int i = 0; i < viewSizeY; i++) {
+    if (i >= y && i <= y + size - 1) {
+      setTile(x, i, true);
+    }
+    else if (ballPositionX != x || i != ballPositionY) {
+      setTile(x, i, false);
+    }
+  }
+}
+
+void clear() {
+  for (int i = 0; i < electrodeArray.length; i++) {
+    fluxels[electrodeArray[i].e][1] = false;
+  }
+}
+
+void setTile(int x, int y, boolean active) {
+  for (int i = 0; i < electrodeArray.length; i++) {
+    if (electrodeArray[i].x == (x - viewSizeX / 2) * 2 && electrodeArray[i].y == (y - viewSizeY / 2) * 2) {
+      fluxels[electrodeArray[i].e][1] = active;
+      break;
+    }
+  }
+}
+
+// Game Implementation - end
+
+void keyPressed()
+  {
+    if  ((keyCode == RIGHT)&(frame_no<max_frame_no)) frame_no++;
+    if  ((keyCode == LEFT)&(frame_no>1)) frame_no--;
+    if (keyCode==SHIFT) cont_flag=true;
+    if  (key == ' '){
+      if (play) play=false; else 
+      {play=true;  time_start=millis(); 
+      frame_max=frameMax();}
+     };
+
+    changed=true;
+    
+    // Game controls - start
+    
+    if (!gameOver) {
+      if (key == 'w' && leftPaddlePosition > 0) {
+         leftPaddlePosition--;
+         drawPaddle(1, leftPaddlePosition, paddleLength);
+      }
+      if (key == 's' && leftPaddlePosition < viewSizeY - paddleLength) {
+         leftPaddlePosition++;
+         drawPaddle(1, leftPaddlePosition, paddleLength);
+      }
+      
+      if (keyCode == UP && rightPaddlePosition > 0) {
+         rightPaddlePosition--;
+         drawPaddle(viewSizeX - 2, rightPaddlePosition, paddleLength);
+      }
+      if (keyCode == DOWN && rightPaddlePosition < viewSizeY - paddleLength) {
+         rightPaddlePosition++;
+         drawPaddle(viewSizeX - 2, rightPaddlePosition, paddleLength);
+      }
+    }
+    
+    if (key == 'r') {
+      restart();
+    }
+    
+    //Game controls - end
+  } // keyPressed
 
 void setup() {
 
@@ -154,9 +316,8 @@ void setup() {
  ///  init_flags=1;
  //  control_data_out[6]=init_flags;
    
-
-
-
+   gameSetup();
+   
  } //setup
 
 
@@ -164,7 +325,9 @@ void setup() {
 void draw() {
     
  // fill(100,100);
-
+    
+   gameUpdate();
+    
    thread("animate");
    drawPlane(data, xsize, ysize,y-1);
 
@@ -714,22 +877,6 @@ changed=true;
 
     
 } // mouse pressed
-
-
-
-void keyPressed() 
-  {
-    if  ((keyCode == RIGHT)&(frame_no<max_frame_no)) frame_no++;
-    if  ((keyCode == LEFT)&(frame_no>1)) frame_no--;
-    if (keyCode==SHIFT) cont_flag=true;
-    if  (key == ' '){
-      if (play) play=false; else 
-      {play=true;  time_start=millis(); 
-      frame_max=frameMax();}
-     };
-
-    changed=true;
-  } // keyPressed
 
 void keyReleased()
   {
