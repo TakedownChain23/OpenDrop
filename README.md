@@ -1,3 +1,18 @@
+## OpenDrop Games
+
+### Info
+
+Included are game implementations for the OpenDrop board V4.0. The games are pde files which are modified versions of the original file OpenDropController4_25.pde
+
+### Games
+
+- Pong
+
+<br/>
+<br/>
+
+OpenDrop readme:
+
 ## OpenDrop 
 
 Open Source Digital Microfluidics Bio Lab
