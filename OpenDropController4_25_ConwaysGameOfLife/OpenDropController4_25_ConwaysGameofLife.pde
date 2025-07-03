@@ -231,6 +231,7 @@ void reset() {
 }
 
 void play() {
+  clearBoard(gameBoard);
   saveToBoard(gameBoard);
   copyBoard(gameBoard, storageBoard);
 }
@@ -255,6 +256,14 @@ void saveToBoard(int board) {
   for (int i = 0; i < viewSizeX; i++) {
     for (int j = 0; j < viewSizeY; j++) {
       boards[board][i + hiddenFrameWidth][j + hiddenFrameWidth] = !getTile(i, j, 1);
+    }
+  }
+}
+
+void clearBoard(int board) {
+  for (int i = 0; i < boards[board].length; i++) {
+    for (int j = 0; j < boards[board][i].length; j++) {
+      boards[board][i][j] = false;
     }
   }
 }
