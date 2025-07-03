@@ -122,7 +122,7 @@ Electrode[] electrodeArray;
 
 // Game Settings - start
 
-int updateInterval = 800;
+int updateInterval = 1000;
 int hiddenFrameWidth = 8;
 
 // Game Settings - end
