@@ -1,3 +1,4 @@
+
 // Use thread() /  / speedup uP software / baud rate
 
 
@@ -121,7 +122,8 @@ Electrode[] electrodeArray;
 
 // Game Settings - start
 
-int updateInterval = 500;
+int updateInterval = 800;
+int hiddenFrameWidth = 8;
 
 // Game Settings - end
 
@@ -132,13 +134,15 @@ int updateIntervalStartTime = 0;
 int viewSizeX = 14;
 int viewSizeY = 8;
 
-int gameFrame = 1;
-int bufferFrame = 2;
-int storageFrame = 3;
+boolean[][][] boards = new boolean[3][viewSizeX + hiddenFrameWidth * 2][viewSizeY + hiddenFrameWidth * 2];
+
+int gameBoard = 0;
+int bufferBoard = 1;
+int storageBoard = 2;
 
 void gameSetup() {
   clear();
-  copyFrame(gameFrame, storageFrame);
+  copyBoard(gameBoard, bufferBoard);
 }
 
 void gameUpdate() {
@@ -152,51 +156,47 @@ void gameUpdate() {
 }
 
 void updateBoard() {
-  copyFrame(gameFrame, bufferFrame);
+  copyBoard(gameBoard, bufferBoard);
   
-  for (int x = 0; x < viewSizeX; x++) {
-    for (int y = 0; y < viewSizeY; y++) {
-      int count = getLiveNeighborCount(x, y, bufferFrame);
+  for (int x = 0; x < boards[bufferBoard].length; x++) {
+    for (int y = 0; y < boards[bufferBoard][x].length; y++) {
+      int neighborCount = getLiveNeighborCount(x, y, bufferBoard);
       
-      if (tileIsAlive(x, y, gameFrame)) {
-        if (count < 2 || count > 3) {
-          setTile(x, y, true, gameFrame);
+      if (tileIsAlive(x, y, gameBoard)) {
+        if (neighborCount < 2 || neighborCount > 3) {
+          boards[gameBoard][x][y] = false;
         }
       }
-      else if (count == 3) {
-        setTile(x, y, false, gameFrame);  
+      else if (neighborCount == 3) {
+        boards[gameBoard][x][y] = true;
       }
     }  
   }
+  
+  loadFromBoard(gameBoard);
 }
 
-int getLiveNeighborCount(int x, int y, int frame) {
+int getLiveNeighborCount(int x, int y, int board) {
   int count = 0;
   
-  if (tileIsAlive(x + 1, y + 1, frame)) count++;
-  if (tileIsAlive(x + 1, y, frame)) count++;
-  if (tileIsAlive(x + 1, y - 1, frame)) count++;
-  if (tileIsAlive(x, y + 1, frame)) count++;
-  if (tileIsAlive(x, y - 1, frame)) count++;
-  if (tileIsAlive(x - 1, y + 1, frame)) count++;
-  if (tileIsAlive(x - 1, y, frame)) count++;
-  if (tileIsAlive(x - 1, y - 1, frame)) count++;
+  if (tileIsAlive(x + 1, y + 1, board)) count++;
+  if (tileIsAlive(x + 1, y, board)) count++;
+  if (tileIsAlive(x + 1, y - 1, board)) count++;
+  if (tileIsAlive(x, y + 1, board)) count++;
+  if (tileIsAlive(x, y - 1, board)) count++;
+  if (tileIsAlive(x - 1, y + 1, board)) count++;
+  if (tileIsAlive(x - 1, y, board)) count++;
+  if (tileIsAlive(x - 1, y - 1, board)) count++;
   
   return count;
 }
 
-boolean tileIsAlive(int x, int y, int frame) {
-  if (x < 0 || x >= viewSizeX || y < 0 || y >= viewSizeY) {
+boolean tileIsAlive(int x, int y, int board) {
+  if (x < 0 || x >= boards[board].length || y < 0 || y >= boards[board][x].length) {
     return false;
   }
   
-  for (int i = 0; i < electrodeArray.length; i++) {
-    if (electrodeArray[i].x == (x - viewSizeX / 2) * 2 && electrodeArray[i].y == (y - viewSizeY / 2) * 2) {
-      return !fluxels[electrodeArray[i].e][frame];
-    }
-  }
-  
-  return false;
+  return boards[board][x][y];
 }
 
 void setTile(int x, int y, boolean active, int frame) {
@@ -208,24 +208,54 @@ void setTile(int x, int y, boolean active, int frame) {
   }
 }
 
-void clear() {
+boolean getTile(int x, int y, int frame) {
   for (int i = 0; i < electrodeArray.length; i++) {
-    fluxels[electrodeArray[i].e][gameFrame] = true;
+    if (electrodeArray[i].x == (x - viewSizeX / 2) * 2 && electrodeArray[i].y == (y - viewSizeY / 2) * 2) {
+      return fluxels[electrodeArray[i].e][frame];
+    }
+  }
+  
+  return false;
+}
+
+void clear() {
+  play = false;
+  for (int i = 0; i < electrodeArray.length; i++) {
+    fluxels[electrodeArray[i].e][1] = true;
   }
 }
 
 void reset() {
   play = false;
-  copyFrame(storageFrame, gameFrame);
+  loadFromBoard(storageBoard);
 }
 
 void play() {
-  copyFrame(gameFrame, storageFrame);
+  saveToBoard(gameBoard);
+  copyBoard(gameBoard, storageBoard);
 }
 
-void copyFrame(int from, int to) {
-  for (int i = 0; i < fluxels.length; i++) {
-    fluxels[i][to] = fluxels[i][from];
+void copyBoard(int from, int to) {
+  for (int i = 0; i < boards[from].length; i++) {
+    for (int j = 0; j < boards[from][i].length; j++) {
+      boards[to][i][j] = boards[from][i][j];
+    }
+  }
+}
+
+void loadFromBoard(int board) {
+  for (int i = 0; i < viewSizeX; i++) {
+    for (int j = 0; j < viewSizeY; j++) {
+      setTile(i, j, !boards[board][i + hiddenFrameWidth][j + hiddenFrameWidth], 1);
+    }
+  }
+}
+
+void saveToBoard(int board) {
+  for (int i = 0; i < viewSizeX; i++) {
+    for (int j = 0; j < viewSizeY; j++) {
+      boards[board][i + hiddenFrameWidth][j + hiddenFrameWidth] = !getTile(i, j, 1);
+    }
   }
 }
 
