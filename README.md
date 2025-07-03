@@ -4,9 +4,11 @@
 
 Included are game implementations for the OpenDrop board V4.0. The games are pde files which are modified versions of the original file OpenDropController4_25.pde
 
+This is part of a challenge given by Steve Mould in his YouTube video about the OpenDrop device: [Watch the video](https://youtu.be/rf-efIZI_Dg?si=06xa1ZgrABqIOBmR)
+
 ### Games
 
-- Pong
+Pong: OpenDropController4_25_Pong
 
 <br/>
 <br/>
